@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raggraph
+  labels: { app: raggraph }
+spec:
+  replicas: 2                      # horizontally scalable — stateless API pods
+  selector:
+    matchLabels: { app: raggraph }
+  template:
+    metadata:
+      labels: { app: raggraph }
+    spec:
+      containers:
+        - name: raggraph
+          image: raggraph:latest    # build & push, then set your registry/tag
+          ports:
+            - containerPort: 8000
+          env:
+            - name: QDRANT_LOCATION
+              value: "http://qdrant:6333"
+            - name: LOG_LEVEL
+              value: "INFO"
+            # LLM key from a Secret (create with `kubectl create secret generic ...`)
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: raggraph-secrets
+                  key: anthropic-api-key
+                  optional: true
+          resources:
+            requests: { cpu: "250m", memory: "512Mi" }
+            limits: { cpu: "1", memory: "1Gi" }
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8000 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /readyz, port: 8000 }   # gates traffic until index is warm
+            initialDelaySeconds: 5
+            periodSeconds: 10

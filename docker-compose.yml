@@ -1,0 +1,21 @@
+# Runs the service against a real Qdrant server (the "at scale" configuration).
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - QDRANT_LOCATION=http://qdrant:6333
+      # - ANTHROPIC_API_KEY=sk-ant-...   # uncomment for LLM-generated answers
+    depends_on:
+      - qdrant
+
+volumes:
+  qdrant_data:

@@ -1,0 +1,17 @@
+# ── Core service (required) ─────────────────────────────────────────
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+pydantic-settings>=2.2
+prometheus-client>=0.20
+numpy>=1.26
+
+# ── Retrieval + orchestration (required) ────────────────────────────
+qdrant-client>=1.9          # vector store (runs in-memory OR against a server)
+rank-bm25>=0.2.2            # sparse / keyword retrieval for hybrid search
+langgraph>=0.2              # graph orchestration
+langchain-core>=0.2         # langgraph dependency
+
+# ── Optional: upgrades quality, app degrades gracefully without them ─
+# sentence-transformers>=2.7   # dense embeddings + cross-encoder re-ranker
+# anthropic>=0.69              # LLM generation (claude-opus-5); stub used otherwise
