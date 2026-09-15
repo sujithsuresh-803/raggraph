@@ -24,14 +24,33 @@ re-ranker, and an extractive stub LLM) — add `sentence-transformers` and an
 
 ## Architecture
 
+```mermaid
+flowchart LR
+    Q([question]) --> R[retrieve]
+    R --> G{grade context}
+    G -- relevant --> GEN[generate]
+    G -- weak, retries left --> RW[rewrite query]
+    RW --> R
+    GEN --> A([answer + cited sources])
 ```
-                 ┌──────────── LangGraph ────────────┐
-  question ──▶ retrieve ──▶ grade ──(relevant)──▶ generate ──▶ answer + sources
-                 ▲            │
-                 │         (weak,                 hybrid retrieval:
-              rewrite ◀── retries left)             dense (Qdrant) + BM25
-                                                    → RRF fusion
-                                                    → cross-encoder re-rank
+
+### Retrieval pipeline
+
+```mermaid
+flowchart TB
+    D[documents] --> C[sentence-aware chunking]
+    C --> E[embed]
+    E --> DD[dedup - content hash + embedding cosine]
+    DD --> IDX[(Qdrant vectors + BM25 index)]
+
+    QQ([question]) --> DN[dense search - Qdrant]
+    QQ --> SP[sparse search - BM25]
+    IDX -.-> DN
+    IDX -.-> SP
+    DN --> RRF[Reciprocal Rank Fusion]
+    SP --> RRF
+    RRF --> XE[cross-encoder re-rank]
+    XE --> TK[top-k grounded context]
 ```
 
 - **Ingest**: chunk → embed → dedup (content hash + embedding cosine) → upsert to Qdrant + BM25 index.
